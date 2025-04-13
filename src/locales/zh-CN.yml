@@ -1,0 +1,8 @@
+commands:
+  notes-search:
+    messages:
+      notFound: '未找到物量为{notes}的歌曲'
+      inValidNotes: '请输入一个大于0的整数'
+      found: '已找到物量为{notes}的歌曲如下:<br/><br/>
+      {info}'
+      tooLarge: '你确定邦多利有这么多物量的谱面？？'

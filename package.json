@@ -1,22 +1,39 @@
 {
   "name": "koishi-plugin-tsugu-addons",
-  "description": "tsugu-bangdream-bot-external",
+  "description": "自用，茨菇扩展小功能",
   "version": "0.0.1",
+  "contributors": [
+    "StarFreedomX <starfreedomx@outlook.com>"
+  ],
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
     "lib",
     "dist"
   ],
+  "homepage": "https://github.com/StarFreedomX/tsugu-addons",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/StarFreedomX/tsugu-addons.git"
+  },
   "license": "MIT",
   "scripts": {},
   "keywords": [
     "chatbot",
     "koishi",
-    "plugin"
+    "plugin",
+    "bangdream"
   ],
   "devDependencies": {},
   "peerDependencies": {
     "koishi": "^4.18.7"
+  },
+  "koishi": {
+    "description": {
+      "zh": "茨菇扩展小功能，自用"
+    },
+    "service": {},
+    "preview": true,
+    "hidden": false
   }
 }
