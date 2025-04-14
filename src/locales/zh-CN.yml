@@ -9,5 +9,5 @@ commands:
   songid:
     messages:
       notFound: '未找到歌曲'
-      answer: '已找到{number}首匹配的歌曲:<br\>
+      answer: '已找到{number}首匹配的歌曲:<br/>
       {info}'
