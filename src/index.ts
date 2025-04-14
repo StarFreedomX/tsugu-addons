@@ -7,7 +7,7 @@ export const tsuguAddonsLogger = new Logger('tsugu-addons');
 
 const songInfoUrl: string = 'https://bestdori.com/api/songs/all.7.json'
 const bandIdUrl: string = 'https://bestdori.com/api/bands/all.1.json'
-const nicknamePath = `${__dirname}/nickname_song.xlsx`
+const nicknamePath = `${__dirname}/../assets/nickname_song.xlsx`
 
 export interface nicknameExcelElement {
   Id: number;
