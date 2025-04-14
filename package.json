@@ -1,7 +1,7 @@
 {
   "name": "koishi-plugin-tsugu-addons",
   "description": "自用，茨菇扩展小功能",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "contributors": [
     "StarFreedomX <starfreedomx@outlook.com>"
   ],
@@ -24,7 +24,6 @@
     "plugin",
     "bangdream"
   ],
-  "devDependencies": {},
   "peerDependencies": {
     "koishi": "^4.18.7"
   },
@@ -35,5 +34,8 @@
     "service": {},
     "preview": true,
     "hidden": false
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5"
   }
 }
