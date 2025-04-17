@@ -1,4 +1,4 @@
-import {Context, Logger, Schema} from 'koishi'
+import {Context, Logger, Schema, Session} from 'koishi'
 import * as XLSX from 'xlsx';
 
 export const name = 'tsugu-addons'
@@ -18,11 +18,13 @@ export interface nicknameExcelElement {
 export interface Config {
   notesSearch: boolean,
   searchSongId: boolean,
+  getNotes: boolean,
 }
 
 export const Config: Schema<Config> = Schema.object({
   notesSearch: Schema.boolean().default(true).description('开启物量查曲功能'),
   searchSongId: Schema.boolean().default(true).description('开启查songId功能'),
+  getNotes: Schema.boolean().default(false).description('开启查物量功能').hidden(),
 })
 
 export function apply(ctx: Context, cfg: Config) {
@@ -31,46 +33,8 @@ export function apply(ctx: Context, cfg: Config) {
     ctx.command('notes-search <notes:number>')
       .alias('物量查曲')
       .action(async ({session}, notes) => {
-        if (!notes || notes <= 0) return session.text('.inValidNotes');
-        else if (notes > 5000) return session.text('.tooLarge');
-        let answer: string[] = [];
-        let songInfoJson: JSON, bandIdJson: JSON;
-        [songInfoJson, bandIdJson] = await initJson();
-        //console.log(songInfoJson);
-        //console.log(bandIdJson);
-        const keysArray = Object.keys(songInfoJson);
-        for (let i = 0; i < keysArray.length; i++) {
-          const key = keysArray[i];
-          const notesObject = songInfoJson?.[key]?.["notes"];
-          //console.log(keysArray);
-          //console.log(key)
-          const notesKeys = Object.keys(notesObject);
-          let diff = -1;
-          for (const key2 in notesKeys) {
-            if (notesObject[key2] == notes) {
-              diff = Number(key2);
-              break;
-            }
-          }
-          if (diff != -1) {
-            const titles = songInfoJson[key]["musicTitle"];
-            const bandNames = bandIdJson[songInfoJson[key]["bandId"] + '']["bandName"];
-            //console.log(bandIdJson);
-            answer.push(`\n#${key} - ${
-              titles[0] ??
-              titles[3] ??
-              titles[2] ??
-              titles[1] ??
-              titles[4]
-            } - ${
-              bandNames[0] ??
-              bandNames[3] ??
-              bandNames[2] ??
-              bandNames[1] ??
-              bandNames[4]
-            } - 难度 ${['easy', 'normal', 'hard', 'expert', 'special'][diff]}\n`)
-          }
-        }
+
+        const answer = await getSongByNotes(session, notes);
 
         if (answer.length > 0) {
           return session.text('.found', {
@@ -88,33 +52,7 @@ export function apply(ctx: Context, cfg: Config) {
     ctx.command('songid <name:text>')
       .alias('查曲id')
       .action(async ({session}, name) => {
-        const nicknameJson = readExcelFile(nicknamePath);
-        let songInfoJson: JSON, bandIdJson: JSON;
-        [songInfoJson, bandIdJson] = await initJson();
-        let answer: string[] = [];
-        for (let i = 1; i < nicknameJson.length; i++) {
-          if (nicknameJson[i]?.["Nickname"]?.split(',')?.some(item => betterCompare(item, name)) ||
-            songInfoJson[String(nicknameJson[i].Id)]?.["musicTitle"]?.some(item => betterCompare(item, name))
-          ) {
-            const key = nicknameJson[i].Id;
-            const titles = songInfoJson[key]["musicTitle"];
-            const bandNames = bandIdJson[songInfoJson[key]["bandId"] + '']["bandName"];
-            answer.push(`\n#${key} - ${
-              titles[0] ??
-              titles[3] ??
-              titles[2] ??
-              titles[1] ??
-              titles[4]
-            } - ${
-              bandNames[0] ??
-              bandNames[3] ??
-              bandNames[2] ??
-              bandNames[1] ??
-              bandNames[4]
-            }\n`)
-          }
-
-        }
+        const answer = await getSongId(name);
 
         if (!answer || answer.length == 0) {
           return session.text('.notFound');
@@ -126,6 +64,88 @@ export function apply(ctx: Context, cfg: Config) {
         }
       })
   }
+
+  if (cfg.getNotes) {
+    ctx.command('getn <songInfo>')
+      .alias('查物量')
+      .action(async ({session}, songInfo) => {
+        const [songInfoJson, bandIdJson] = await initJson();
+      })
+  }
+}
+
+async function getSongByNotes(session: Session, notes: number){
+  if (!notes || notes <= 0) return session.text('.inValidNotes');
+  else if (notes > 5000) return session.text('.tooLarge');
+  let answer: string[] = [];
+  const [songInfoJson, bandIdJson] = await initJson();
+  //console.log(songInfoJson);
+  //console.log(bandIdJson);
+  const keysArray = Object.keys(songInfoJson);
+  for (let i = 0; i < keysArray.length; i++) {
+    const key = keysArray[i];
+    const notesObject = songInfoJson?.[key]?.["notes"];
+    //console.log(keysArray);
+    //console.log(key)
+    const notesKeys = Object.keys(notesObject);
+    let diff = -1;
+    for (const key2 in notesKeys) {
+      if (notesObject[key2] == notes) {
+        diff = Number(key2);
+        break;
+      }
+    }
+    if (diff != -1) {
+      const titles = songInfoJson[key]["musicTitle"];
+      const bandNames = bandIdJson[songInfoJson[key]["bandId"] + '']["bandName"];
+      //console.log(bandIdJson);
+      answer.push(`\n#${key} - ${
+        titles[0] ??
+        titles[3] ??
+        titles[2] ??
+        titles[1] ??
+        titles[4]
+      } - ${
+        bandNames[0] ??
+        bandNames[3] ??
+        bandNames[2] ??
+        bandNames[1] ??
+        bandNames[4]
+      } - 难度 ${['easy', 'normal', 'hard', 'expert', 'special'][diff]}\n`)
+    }
+  }
+  return answer;
+}
+
+async function getSongId(name: string) {
+  const nicknameJson = readExcelFile(nicknamePath);
+  let songInfoJson: JSON, bandIdJson: JSON;
+  [songInfoJson, bandIdJson] = await initJson();
+  let answer: string[] = [];
+  for (let i = 1; i < nicknameJson.length; i++) {
+    if (nicknameJson[i]?.["Nickname"]?.split(',')?.some(item => betterCompare(item, name)) ||
+      songInfoJson[String(nicknameJson[i].Id)]?.["musicTitle"]?.some(item => betterCompare(item, name))
+    ) {
+      const key = nicknameJson[i].Id;
+      const titles = songInfoJson[key]["musicTitle"];
+      const bandNames = bandIdJson[songInfoJson[key]["bandId"] + '']["bandName"];
+      answer.push(`\n#${key} - ${
+        titles[0] ??
+        titles[3] ??
+        titles[2] ??
+        titles[1] ??
+        titles[4]
+      } - ${
+        bandNames[0] ??
+        bandNames[3] ??
+        bandNames[2] ??
+        bandNames[1] ??
+        bandNames[4]
+      }\n`)
+    }
+
+  }
+  return answer;
 }
 
 /**
